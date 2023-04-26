@@ -6,5 +6,5 @@ import (
 
 func main() {
 	r := config.Router()
-	r.Run()
+	r.Run(":80")
 }

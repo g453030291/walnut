@@ -37,4 +37,12 @@ go build -mod=vendor	不用go module的缓存构建项目，而是基于项目�
 
 walnut记录:
 
+启动项目:
+
+`go run main.go`
+
+打包：
+
+`go build -o bin/walunt-0.1.sh main.go`
+
 `go get -u github.com/gin-gonic/gin@v1.9.0`

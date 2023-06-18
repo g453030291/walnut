@@ -46,3 +46,11 @@ walnut记录:
 `go build -o bin/walunt-0.1.sh main.go`
 
 `go get -u github.com/gin-gonic/gin@v1.9.0`
+
+异构编译:
+
+`GOOS=linux GOARCH=amd64 go build -o bin/walunt-0.1.sh main.go`
+
+nginx加载配置重启:
+
+`sudo ./nginx -s reload`

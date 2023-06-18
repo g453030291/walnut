@@ -19,5 +19,10 @@ func Router() *gin.Engine {
 		health.GET("/ping", app.Ping)
 	}
 
+	fmsg := router.Group("/fmsg")
+	{
+		fmsg.GET("/", app.Fmsg)
+	}
+
 	return router
 }

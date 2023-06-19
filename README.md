@@ -41,6 +41,10 @@ walnut记录:
 
 `go run main.go`
 
+服务器启动:
+
+`nohup ./walunt-0.1.sh >walunt.log 2>&1 &`
+
 打包：
 
 `go build -o bin/walunt-0.1.sh main.go`

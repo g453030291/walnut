@@ -6,23 +6,24 @@ import (
 )
 
 func Router() *gin.Engine {
-	router := gin.Default()
+	//创建gin
+	r := gin.New()
 
-	router.GET("/", func(context *gin.Context) {
+	r.GET("/", func(context *gin.Context) {
 		context.JSON(200, gin.H{
 			"message": "success",
 		})
 	})
 
-	health := router.Group("/health")
+	health := r.Group("/health")
 	{
 		health.GET("/ping", app.Ping)
 	}
 
-	fmsg := router.Group("/fmsg")
+	fmsg := r.Group("/fmsg")
 	{
-		fmsg.GET("/", app.Fmsg)
+		fmsg.POST("", app.Fmsg)
 	}
 
-	return router
+	return r
 }

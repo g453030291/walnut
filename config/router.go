@@ -25,5 +25,10 @@ func Router() *gin.Engine {
 		fmsg.POST("", app.Fmsg)
 	}
 
+	openai := r.Group("/openai")
+	{
+		openai.POST("", app.MakingRequest)
+	}
+
 	return r
 }

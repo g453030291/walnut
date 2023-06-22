@@ -1,12 +1,14 @@
 package app
 
 import (
+	"context"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/tidwall/gjson"
 	"github.com/valyala/fasthttp"
 	"io"
 	"net/http"
+	"walnut/rds"
 )
 
 func Fmsg(c *gin.Context) {
@@ -82,7 +84,10 @@ func tenantToken() string {
 
 	req.Header.Set("Content-Type", "application/json; charset=utf-8")
 
-	req.SetBodyString(`{"app_id": "cli_a41ae390b3b8d00c","app_secret": "kS530ykScDEd97T7dN9bZb8mla62DQ2s"}`)
+	appId, _ := rds.Rds.Get(context.Background(), "app_id").Result()
+	appSecret, _ := rds.Rds.Get(context.Background(), "app_secret").Result()
+
+	req.SetBodyString(`{"app_id": "` + appId + `","app_secret": "` + appSecret + `"}`)
 
 	resp := fasthttp.AcquireResponse()
 	defer fasthttp.ReleaseResponse(resp)

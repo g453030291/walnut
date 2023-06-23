@@ -39,8 +39,8 @@ func Chat(msg string) []byte {
 
 	req.SetBodyString(`{"model": "gpt-3.5-turbo",
 							"messages": [
-										{"role": "system", "content": "` + msg + `"},
-										{"role": "user", "content": "Say this is a test!"}
+										{"role": "system", "content": "You are a helpful assistant."},
+										{"role": "user", "content": "` + msg + `"}
 							],
 							"temperature":0.7}`)
 

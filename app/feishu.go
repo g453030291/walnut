@@ -2,12 +2,14 @@ package app
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/tidwall/gjson"
 	"github.com/valyala/fasthttp"
 	"io"
 	"net/http"
+	"walnut/model"
 	"walnut/rds"
 )
 
@@ -46,19 +48,22 @@ func sendMsg(body string) string {
 	req.Header.Set("Authorization", "Bearer "+tenantToken())
 	req.Header.Set("Content-Type", "application/json; charset=utf-8")
 
-	//sendText := map[string]string{
-	//	"text": "send text",
-	//}
-	//
-	//jsonData, err := json.Marshal(sendText)
-	//if err != nil {
-	//	fmt.Println("json marshal error:", err)
-	//}
-	requestData := `{"receive_id": "` + gjson.Get(body, "event.sender.sender_id.open_id").String() + `", "msg_type": "text","content":  "{\"text\":\"send text\"}"}`
+	//发送消息
+	m := model.Content{
+		Text: "send text",
+	}
 
-	fmt.Printf("发送的消息:%s\n", gjson.Parse(requestData).String())
+	jsonText, _ := json.Marshal(m)
 
-	req.SetBodyString(requestData)
+	requestData := model.SendMsg{
+		ReceiveId: gjson.Get(body, "event.sender.sender_id.open_id").String(),
+		MsgType:   "text",
+		Content:   string(jsonText),
+	}
+	jsonData, _ := json.Marshal(requestData)
+	fmt.Printf("发送的消息:%s\n", string(jsonData))
+
+	req.SetBodyString(string(jsonData))
 
 	resp := fasthttp.AcquireResponse()
 	defer fasthttp.ReleaseResponse(resp)

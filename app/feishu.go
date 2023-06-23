@@ -49,8 +49,10 @@ func sendMsg(body string) string {
 	req.Header.Set("Content-Type", "application/json; charset=utf-8")
 
 	//发送消息
+	chatResp := Chat(text)
+	toText := gjson.Get(string(chatResp), "choices.0.message.content").String()
 	m := model.Content{
-		Text: "send text",
+		Text: toText,
 	}
 
 	jsonText, _ := json.Marshal(m)

@@ -9,6 +9,7 @@ import (
 	"github.com/valyala/fasthttp"
 	"io"
 	"net/http"
+	"time"
 	"walnut/model"
 	"walnut/rds"
 )
@@ -49,7 +50,28 @@ func sendMsg(body string) string {
 	req.Header.Set("Content-Type", "application/json; charset=utf-8")
 
 	//发送消息
-	chatResp := Chat(text)
+	//chatResp := Chat(text)
+	chatResp := `{
+    "id": "chatcmpl-7Ud5DFEc4dYRiIoDUT6NiQRn64J4n",
+    "object": "chat.completion",
+    "created": 1687534431,
+    "model": "gpt-3.5-turbo-0301",
+    "choices": [
+        {
+            "index": 0,
+            "message": {
+                "role": "assistant",
+                "content": "我不确定您指的是哪一个API。但是，OpenAI的GPT-3 API是收费的，具体费用取决于您使用的API的计划和用途。您可以在OpenAI的官方网站上了解更多信息。"
+            },
+            "finish_reason": "stop"
+        }
+    ],
+    "usage": {
+        "prompt_tokens": 28,
+        "completion_tokens": 67,
+        "total_tokens": 95
+    }
+}`
 	toText := gjson.Get(string(chatResp), "choices.0.message.content").String()
 	m := model.Content{
 		Text: toText,
@@ -80,7 +102,16 @@ func sendMsg(body string) string {
 	return string(resp.Body())
 }
 
+/**
+ * 获取飞书tenant token
+ * 有效期为2小时
+ * 这里设置保存到redis,有效期100分钟
+ */
 func tenantToken() string {
+	tenantToken, err := rds.Rds.Get(context.Background(), "tenant_access_token").Result()
+	if err == nil {
+		return tenantToken
+	}
 	url := "https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal"
 
 	req := fasthttp.AcquireRequest()
@@ -103,5 +134,10 @@ func tenantToken() string {
 		fmt.Println("Error in Do:", err)
 	}
 
-	return gjson.Get(string(resp.Body()), "tenant_access_token").String()
+	tenantToken = gjson.Get(string(resp.Body()), "tenant_access_token").String()
+	rds.Rds.Set(context.Background(), "tenant_access_token", tenantToken, 100*time.Minute)
+
+	fmt.Println("获取新的tenant_token:", tenantToken)
+
+	return tenantToken
 }

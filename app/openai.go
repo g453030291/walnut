@@ -83,6 +83,7 @@ func Chat(msg string, user string) []byte {
 	var message model.Message
 	json.Unmarshal([]byte(newMsg), &message)
 	messages = append(messages, message)
+	fmt.Println("messages:", messages)
 	rds.Rds.Set(context.Background(), user, messages, 1*time.Hour)
 
 	return resp.Body()

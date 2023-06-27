@@ -20,7 +20,10 @@ func Fmsg(c *gin.Context) {
 		c.AbortWithStatusJSON(400, gin.H{"error": "invilid request json"})
 	}
 
-	c.Data(http.StatusOK, "application/json; charset=utf-8", []byte(sendMsg(string(body))))
+	c.Data(http.StatusOK, "application/json; charset=utf-8", []byte("success"))
+	go func() {
+		sendMsg(string(body))
+	}()
 }
 
 // 飞书认证challenge方法
@@ -31,7 +34,7 @@ func challenge(data string) gin.H {
 }
 
 // 接收,回复飞书消息
-func sendMsg(body string) string {
+func sendMsg(body string) {
 	url := "https://open.feishu.cn/open-apis/im/v1/messages?receive_id_type=open_id"
 
 	content := gjson.Get(body, "event.message.content").String()
@@ -52,27 +55,7 @@ func sendMsg(body string) string {
 
 	//发送消息
 	chatResp := Chat(text, openId)
-	//	chatResp := `{
-	//    "id": "chatcmpl-7Ud5DFEc4dYRiIoDUT6NiQRn64J4n",
-	//    "object": "chat.completion",
-	//    "created": 1687534431,
-	//    "model": "gpt-3.5-turbo-0301",
-	//    "choices": [
-	//        {
-	//            "index": 0,
-	//            "message": {
-	//                "role": "assistant",
-	//                "content": "我不确定您指的是哪一个API。但是，OpenAI的GPT-3 API是收费的，具体费用取决于您使用的API的计划和用途。您可以在OpenAI的官方网站上了解更多信息。"
-	//            },
-	//            "finish_reason": "stop"
-	//        }
-	//    ],
-	//    "usage": {
-	//        "prompt_tokens": 28,
-	//        "completion_tokens": 67,
-	//        "total_tokens": 95
-	//    }
-	//}`
+
 	toText := gjson.Get(string(chatResp), "choices.0.message.content").String()
 	m := model.Content{
 		Text: toText,
@@ -97,7 +80,7 @@ func sendMsg(body string) string {
 		fmt.Println("Error in Do:", err)
 	}
 
-	return string(resp.Body())
+	//return string(resp.Body())
 }
 
 /**

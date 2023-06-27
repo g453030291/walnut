@@ -78,6 +78,7 @@ func Chat(msg string, user string) []byte {
 	if err := fasthttp.Do(req, resp); err != nil {
 		fmt.Println("Error in Do:", err)
 	}
+	fmt.Println("open ai resp:", string(resp.Body()))
 
 	newMsg := gjson.Get(string(resp.Body()), "choices.0.message").String()
 	var message model.Message

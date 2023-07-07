@@ -93,3 +93,27 @@ func Chat(msg string, user string) []byte {
 
 	return resp.Body()
 }
+
+// List 列出所有模型
+func List(c *gin.Context) {
+	url := "https://api.openai.com/v1/models"
+	req := fasthttp.AcquireRequest()
+	defer fasthttp.ReleaseRequest(req)
+
+	req.SetRequestURI(url)
+	req.Header.SetMethod("GET")
+
+	apiKey, _ := rds.Rds.Get(context.Background(), "api_key").Result()
+
+	req.Header.Set("Authorization", "Bearer "+apiKey)
+
+	resp := fasthttp.AcquireResponse()
+	defer fasthttp.ReleaseResponse(resp)
+
+	if err := fasthttp.Do(req, resp); err != nil {
+		fmt.Println("Error in Do:", err)
+	}
+	fmt.Println("open ai resp:", string(resp.Body()))
+
+	c.Data(http.StatusOK, "application/json; charset=utf-8", resp.Body())
+}

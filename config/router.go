@@ -28,6 +28,12 @@ func Router() *gin.Engine {
 	openai := r.Group("/openai")
 	{
 		openai.POST("", app.MakingRequest)
+		openai.GET("/list", app.List)
+	}
+
+	home := r.Group("/home")
+	{
+		home.GET("", app.Home)
 	}
 
 	return r

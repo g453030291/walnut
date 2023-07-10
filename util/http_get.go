@@ -3,6 +3,7 @@ package util
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 )
@@ -22,7 +23,7 @@ func HttpReq(method string, url string, headers map[string]string, param map[str
 	req, err := http.NewRequest(method, url, byteParam)
 
 	if err != nil {
-		panic(err)
+		fmt.Printf("http.NewRequest error:%v\n", err)
 	}
 
 	//set header
@@ -33,7 +34,7 @@ func HttpReq(method string, url string, headers map[string]string, param map[str
 	//发送请求
 	resp, err := client.Do(req)
 	if err != nil {
-		panic(err)
+		fmt.Printf("client.Do error:%v\n", err)
 	}
 	defer resp.Body.Close()
 

@@ -1,19 +1,25 @@
 package app
 
 import (
+	"context"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/tidwall/gjson"
 	"net/http"
 	"strings"
+	"time"
+	"walnut/rds"
 	"walnut/util"
 )
-
-var alert = ""
 
 // Home 回家车票监控
 // 北京->太原
 func Home(c *gin.Context) {
+	c.Data(http.StatusOK, "application/json; charset=utf-8", GoHome())
+}
+
+func GoHome() []byte {
+	fmt.Println("运行时间:" + time.Now().Format("2006-01-02 15:04:05"))
 	headers := map[string]string{
 		"Cookie": "_jc_save_fromDate=2023-07-14; _jc_save_toDate=2023-07-04",
 	}
@@ -37,11 +43,11 @@ func Home(c *gin.Context) {
 					"text": fmt.Sprintf("车次:%s 商务:%s 一等:%s 二等:%s", dataStr[3], dataStr[32], dataStr[31], dataStr[30]),
 				},
 			}
-			util.HttpReq("POST", alert, nil, alertMsg)
+			url, _ := rds.Rds.Get(context.Background(), "train_alert").Result()
+			util.HttpReq("POST", url, nil, alertMsg)
 			return false
 		}
 		return true
 	})
-
-	c.Data(http.StatusOK, "application/json; charset=utf-8", result)
+	return result
 }

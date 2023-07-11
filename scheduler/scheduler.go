@@ -1,4 +1,4 @@
-package config
+package scheduler
 
 import (
 	"fmt"
@@ -14,8 +14,9 @@ var Scheduler *gocron.Scheduler
 // 阳泉北   = YPP
 func CronConfig() {
 	Scheduler = gocron.NewScheduler(time.UTC)
+	Scheduler.TagsUnique()
 	Scheduler.StartAsync()
-	fmt.Printf("go cron init")
+	fmt.Println("go cron init success")
 	//_, err := scheduler.Every(10).Minutes().Do(app.GoHome("G613", "2023-07-14", "BJP", "TYV"))
 	//if err != nil {
 	//	fmt.Println("cron error:", err)

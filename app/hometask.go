@@ -46,7 +46,7 @@ func (t *HomeTask) Run() {
 					"text": fmt.Sprintf("时间:%s\n站点:%s-%s\n车次:%s\n商务:%s\n一等:%s\n二等:%s", t.FromDate, t.FromStation, t.ToStation, dataStr[3], dataStr[32], dataStr[31], dataStr[30]),
 				},
 			}
-			url, _ := rds.Rds.Get(context.Background(), "test_alert").Result()
+			url, _ := rds.Rds.Get(context.Background(), "train_alert").Result()
 			util.HttpReq("POST", url, nil, alertMsg)
 			return false
 		}

@@ -33,7 +33,8 @@ func Router() *gin.Engine {
 
 	home := r.Group("/home")
 	{
-		home.GET("", app.Home)
+		home.POST("", app.Home)
+		home.POST("/remove", app.RemoveTask)
 	}
 
 	return r

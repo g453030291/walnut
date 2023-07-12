@@ -58,3 +58,7 @@ walnut记录:
 nginx加载配置重启:
 
 `sudo ./nginx -s reload`
+
+连接本地redis:
+
+`redis-cli --raw`

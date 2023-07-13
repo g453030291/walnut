@@ -14,10 +14,13 @@ import (
 	"time"
 	"walnut/model"
 	"walnut/rds"
+	"walnut/util"
 )
 
 var GPT4 = "gpt-4"
 var GPT35 = "gpt-3.5-turbo"
+var GPT3516K = "gpt-3.5-turbo-16k"
+var URL = "https://api.openai.com/v1/chat/completions"
 
 func MakingRequest(c *gin.Context) {
 	body, err := io.ReadAll(c.Request.Body)
@@ -52,46 +55,31 @@ func Chat(msg string, user string) []byte {
 		Content: msg,
 	})
 	requestChat := model.Chat{
-		Model:       "gpt-3.5-turbo",
+		Model:       GPT3516K,
 		Messages:    messages,
-		Temperature: 1,
+		Temperature: 0.5,
 	}
-	chatJson, _ := json.Marshal(requestChat)
+	//chatJson, _ := json.Marshal(requestChat)
 
-	url := "https://api.openai.com/v1/chat/completions"
-	req := fasthttp.AcquireRequest()
-	defer fasthttp.ReleaseRequest(req)
-
-	req.SetRequestURI(url)
-	req.Header.SetMethod("POST")
-
+	//请求openai
 	apiKey, _ := rds.Rds.Get(context.Background(), "api_key").Result()
-
-	req.Header.Set("Content-Type", "application/json; charset=utf-8")
-	req.Header.Set("Authorization", "Bearer "+apiKey)
-
-	req.SetBodyString(string(chatJson))
-
-	resp := fasthttp.AcquireResponse()
-	defer fasthttp.ReleaseResponse(resp)
-
-	if err := fasthttp.Do(req, resp); err != nil {
-		fmt.Println("Error in Do:", err)
-	}
-	fmt.Println("open ai resp:", string(resp.Body()))
-
-	newMsg := gjson.Get(string(resp.Body()), "choices.0.message").String()
+	headers := map[string]string{
+		"Content-Type":  "application/json; charset=utf-8",
+		"Authorization": "Bearer " + apiKey}
+	resp := util.HttpReq("POST", URL, headers, requestChat)
+	fmt.Println("open ai resp:", string(resp))
+	//处理返回结果
+	newMsg := gjson.Get(string(resp), "choices.0.message").String()
 	var message model.Message
 	json.Unmarshal([]byte(newMsg), &message)
 	messages = append(messages, message)
-	fmt.Println("messages:", messages)
 	messageJsonArray, err := json.Marshal(messages)
 	if err != nil {
 		fmt.Println("json marshal error:", err)
 	}
 	rds.Rds.Set(context.Background(), user, messageJsonArray, 1*time.Hour)
 
-	return resp.Body()
+	return resp
 }
 
 // List 列出所有模型

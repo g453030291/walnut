@@ -69,7 +69,7 @@ func sendMsg(body string) {
 		Content:   string(jsonText),
 	}
 	jsonData, _ := json.Marshal(requestData)
-	fmt.Printf("send: id-%s msg-%s\n", openId, jsonText)
+	//fmt.Printf("send: id-%s msg-%s\n", openId, jsonText)
 
 	req.SetBodyString(string(jsonData))
 

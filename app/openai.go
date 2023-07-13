@@ -58,6 +58,33 @@ func Chat(msg string, user string) []byte {
 		Model:       GPT3516K,
 		Messages:    messages,
 		Temperature: 0.5,
+		Functions: []model.Functions{{
+			Name:        "train_monitor",
+			Description: "help people monitor train ticket for go home",
+			Parameters: model.Parameters{
+				Type: "object",
+				Properties: map[string]interface{}{
+					"trainNumber": map[string]string{
+						"type":        "string",
+						"description": "train number,e.g. G602, G613",
+					},
+					"fromDate": map[string]string{
+						"type":        "string",
+						"description": "date str,e.g. 2021-10-01",
+					},
+					"fromStation": map[string]interface{}{
+						"type":        "string",
+						"description": "station code",
+						"enum":        []string{"TYV", "BJP"},
+					},
+					"toStation": map[string]interface{}{
+						"type":        "string",
+						"description": "station code",
+						"enum":        []string{"TYV", "BJP"},
+					},
+				},
+				Required: []string{"trainNumber", "fromDate", "fromStation", "toStation"},
+			}}},
 	}
 	//chatJson, _ := json.Marshal(requestChat)
 

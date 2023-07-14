@@ -17,7 +17,7 @@ func Home(c *gin.Context) {
 	}
 	param := string(body)
 	//添加定时任务
-	tag := gjson.Get(param, "fromDate").String() + gjson.Get(param, "fromDate").String()
+	tag := gjson.Get(param, "fromDate").String() + gjson.Get(param, "trainNumber").String()
 	task := &HomeTask{
 		TrainNumber: gjson.Get(param, "trainNumber").String(),
 		FromDate:    gjson.Get(param, "fromDate").String(),

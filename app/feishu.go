@@ -41,7 +41,7 @@ func sendMsg(body string) {
 	// 收到的消息
 	text := gjson.Get(content, "text").String()
 	openId := gjson.Get(body, "event.sender.sender_id.open_id").String()
-	fmt.Printf("receive: id-%s msg-%s\n", openId, text)
+	//fmt.Printf("receive: id-%s msg-%s\n", openId, text)
 
 	// 创建一个HTTP请求
 	req := fasthttp.AcquireRequest()
@@ -118,7 +118,7 @@ func tenantToken() string {
 	tenantToken = gjson.Get(string(resp.Body()), "tenant_access_token").String()
 	rds.Rds.Set(context.Background(), "tenant_access_token", tenantToken, 100*time.Minute)
 
-	fmt.Println("获取新的tenant_token:", tenantToken)
+	//fmt.Println("获取新的tenant_token:", tenantToken)
 
 	return tenantToken
 }

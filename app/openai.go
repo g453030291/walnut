@@ -14,6 +14,7 @@ import (
 	"time"
 	"walnut/model"
 	"walnut/rds"
+	"walnut/scheduler"
 	"walnut/util"
 )
 
@@ -37,7 +38,7 @@ func Chat(msg string, user string) []byte {
 	var messages []model.Message
 	messageStr, err := rds.Rds.Get(context.Background(), user).Result()
 	if err == redis.Nil {
-		fmt.Printf("this user:%s message cache is nil:\n", user)
+		//fmt.Printf("this user:%s message cache is nil:\n", user)
 		sysMsg := model.Message{
 			Role:    "system",
 			Content: "You are a helpful assistant.",
@@ -94,9 +95,35 @@ func Chat(msg string, user string) []byte {
 		"Content-Type":  "application/json; charset=utf-8",
 		"Authorization": "Bearer " + apiKey}
 	resp := util.HttpReq("POST", URL, headers, requestChat)
-	fmt.Println("open ai resp:", string(resp))
+	var oResp string
+	oResp = string(resp)
+	fmt.Println("open ai resp:", oResp)
 	//处理返回结果
-	newMsg := gjson.Get(string(resp), "choices.0.message").String()
+	finishReason := gjson.Get(oResp, "choices.0.finish_reason").String()
+	if finishReason == "function_call" {
+		functionName := gjson.Get(oResp, "choices.0.message.function_call.name").String()
+		if functionName == "train_monitor" {
+			tag := gjson.Get(oResp, "choices.0.message.function_call.fromDate").String() + gjson.Get(oResp, "choices.0.message.function_call.trainNumber").String()
+			task := &HomeTask{
+				TrainNumber: gjson.Get(oResp, "choices.0.message.function_call.trainNumber").String(),
+				FromDate:    gjson.Get(oResp, "choices.0.message.function_call.fromDate").String(),
+				FromStation: gjson.Get(oResp, "choices.0.message.function_call.fromStation").String(),
+				ToStation:   gjson.Get(oResp, "choices.0.message.function_call.toStation").String()}
+			scheduler.Scheduler.Every(30).Minutes().Tag(tag).Do(task.Run)
+		} else {
+			fmt.Println("function name is not support")
+		}
+		//调用完成后 返回open ai结果
+		funMsg := model.Message{
+			Role:    "function",
+			Content: "function call successful",
+		}
+		messages = append(messages, funMsg)
+		afterFunResp := util.HttpReq("POST", URL, headers, requestChat)
+		oResp = string(afterFunResp)
+	}
+
+	newMsg := gjson.Get(oResp, "choices.0.message").String()
 	var message model.Message
 	json.Unmarshal([]byte(newMsg), &message)
 	messages = append(messages, message)

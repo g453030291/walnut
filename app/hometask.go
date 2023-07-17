@@ -22,6 +22,7 @@ type HomeTask struct {
 // fromStation 出发站
 // toStation 到达站
 func (t *HomeTask) Run() {
+	fmt.Println("收到的参数:" + t.TrainNumber + " " + t.FromDate + " " + t.FromStation + " " + t.ToStation)
 	fmt.Println("运行时间:" + time.Now().Format("2006-01-02 15:04:05"))
 	headers := map[string]string{
 		"Cookie": "_jc_save_fromDate=" + t.FromDate + "; _jc_save_toDate=" + t.FromDate,

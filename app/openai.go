@@ -34,11 +34,13 @@ func MakingRequest(c *gin.Context) {
 }
 
 func Chat(msg string, user string) []byte {
+	var isNewChat = false
 	//拼接消息体 redis中先获取是否有缓存
 	var messages []model.Message
 	messageStr, err := rds.Rds.Get(context.Background(), user).Result()
 	if err == redis.Nil {
-		//fmt.Printf("this user:%s message cache is nil:\n", user)
+		// 新的对话
+		isNewChat = true
 		sysMsg := model.Message{
 			Role:    "system",
 			Content: "You are a helpful assistant.",
@@ -55,61 +57,17 @@ func Chat(msg string, user string) []byte {
 		Role:    "user",
 		Content: msg,
 	})
-	requestChat := model.Chat{
-		Model:       GPT3516K,
-		Messages:    messages,
-		Temperature: 0.5,
-		Functions: []model.Functions{{
-			Name:        "train_monitor",
-			Description: "help people monitor train ticket for go home",
-			Parameters: model.Parameters{
-				Type: "object",
-				Properties: map[string]interface{}{
-					"trainNumber": map[string]string{
-						"type":        "string",
-						"description": "train number,e.g. G602, G613",
-					},
-					"fromDate": map[string]string{
-						"type":        "string",
-						"description": "date str,e.g. 2021-10-01",
-					},
-					"fromStation": map[string]interface{}{
-						"type":        "string",
-						"description": "station code",
-						"enum":        []string{"TYV", "BJP"},
-					},
-					"toStation": map[string]interface{}{
-						"type":        "string",
-						"description": "station code",
-						"enum":        []string{"TYV", "BJP"},
-					},
-				},
-				Required: []string{"trainNumber", "fromDate", "fromStation", "toStation"},
-			}}},
-	}
-	//chatJson, _ := json.Marshal(requestChat)
-
-	//请求openai
-	apiKey, _ := rds.Rds.Get(context.Background(), "api_key").Result()
-	headers := map[string]string{
-		"Content-Type":  "application/json; charset=utf-8",
-		"Authorization": "Bearer " + apiKey}
-	resp := util.HttpReq("POST", URL, headers, requestChat)
-	var oResp string
-	oResp = string(resp)
-	fmt.Println("open ai resp:", oResp)
+	//请求open ai
+	modelResp := ChatCompletionsReq(messages, isNewChat)
 	//处理返回结果
-	finishReason := gjson.Get(oResp, "choices.0.finish_reason").String()
+	finishReason := gjson.Get(modelResp, "choices.0.finish_reason").String()
 	if finishReason == "function_call" {
-		functionName := gjson.Get(oResp, "choices.0.message.function_call.name").String()
+		functionName := gjson.Get(modelResp, "choices.0.message.function_call.name").String()
 		if functionName == "train_monitor" {
-			tag := gjson.Get(oResp, "choices.0.message.function_call.fromDate").String() + gjson.Get(oResp, "choices.0.message.function_call.trainNumber").String()
-			task := &HomeTask{
-				TrainNumber: gjson.Get(oResp, "choices.0.message.function_call.trainNumber").String(),
-				FromDate:    gjson.Get(oResp, "choices.0.message.function_call.fromDate").String(),
-				FromStation: gjson.Get(oResp, "choices.0.message.function_call.fromStation").String(),
-				ToStation:   gjson.Get(oResp, "choices.0.message.function_call.toStation").String()}
-			scheduler.Scheduler.Every(30).Minutes().Tag(tag).Do(task.Run)
+			var arguments HomeTask
+			json.Unmarshal([]byte(gjson.Get(modelResp, "choices.0.message.function_call.arguments").String()), &arguments)
+			tag := arguments.FromDate + arguments.TrainNumber
+			scheduler.Scheduler.Every(30).Minutes().Tag(tag).Do(arguments.Run)
 		} else {
 			fmt.Println("function name is not support")
 		}
@@ -117,13 +75,13 @@ func Chat(msg string, user string) []byte {
 		funMsg := model.Message{
 			Role:    "function",
 			Content: "function call successful",
+			Name:    functionName,
 		}
 		messages = append(messages, funMsg)
-		afterFunResp := util.HttpReq("POST", URL, headers, requestChat)
-		oResp = string(afterFunResp)
+		modelResp = ChatCompletionsReq(messages, false)
 	}
-
-	newMsg := gjson.Get(oResp, "choices.0.message").String()
+	// 普通消息处理
+	newMsg := gjson.Get(modelResp, "choices.0.message").String()
 	var message model.Message
 	json.Unmarshal([]byte(newMsg), &message)
 	messages = append(messages, message)
@@ -133,7 +91,64 @@ func Chat(msg string, user string) []byte {
 	}
 	rds.Rds.Set(context.Background(), user, messageJsonArray, 1*time.Hour)
 
-	return resp
+	return []byte(modelResp)
+}
+
+// ChatCompletionsReq 封装openai chat请求
+func ChatCompletionsReq(messages []model.Message, isNewChat bool) string {
+	// 获取token
+	apiKey, _ := rds.Rds.Get(context.Background(), "api_key").Result()
+	headers := map[string]string{
+		"Content-Type":  "application/json; charset=utf-8",
+		"Authorization": "Bearer " + apiKey}
+	// 拼接参数
+	var requestChat model.Chat
+	if isNewChat {
+		requestChat = model.Chat{
+			Model:       GPT3516K,
+			Messages:    messages,
+			Temperature: 0.5,
+			Functions: []model.Functions{{
+				Name:        "train_monitor",
+				Description: "help people monitor train ticket for go home",
+				Parameters: model.Parameters{
+					Type: "object",
+					Properties: map[string]interface{}{
+						"trainNumber": map[string]string{
+							"type":        "string",
+							"description": "train number,e.g. G602, G613",
+						},
+						"fromDate": map[string]string{
+							"type":        "string",
+							"description": "date str,e.g. 2021-10-01",
+						},
+						"fromStation": map[string]interface{}{
+							"type":        "string",
+							"description": "station code",
+							"enum":        []string{"TYV", "BJP"},
+						},
+						"toStation": map[string]interface{}{
+							"type":        "string",
+							"description": "station code",
+							"enum":        []string{"TYV", "BJP"},
+						},
+					},
+					Required: []string{"trainNumber", "fromDate", "fromStation", "toStation"},
+				}}},
+		}
+	} else {
+		requestChat = model.Chat{
+			Model:       GPT3516K,
+			Messages:    messages,
+			Temperature: 0.5,
+		}
+	}
+	// 发送请求
+	resp := util.HttpReq("POST", URL, headers, requestChat)
+	strResp := string(resp)
+	// 打印返回
+	fmt.Println("open ai resp:", strResp)
+	return strResp
 }
 
 // List 列出所有模型

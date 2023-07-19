@@ -34,13 +34,11 @@ func MakingRequest(c *gin.Context) {
 }
 
 func Chat(msg string, user string) []byte {
-	var isNewChat = false
 	//拼接消息体 redis中先获取是否有缓存
 	var messages []model.Message
 	messageStr, err := rds.Rds.Get(context.Background(), user).Result()
 	if err == redis.Nil {
 		// 新的对话
-		isNewChat = true
 		sysMsg := model.Message{
 			Role:    "system",
 			Content: "You are a helpful assistant.",
@@ -58,7 +56,7 @@ func Chat(msg string, user string) []byte {
 		Content: msg,
 	})
 	//请求open ai
-	modelResp := ChatCompletionsReq(messages, isNewChat)
+	modelResp := ChatCompletionsReq(messages, true)
 	//处理返回结果
 	finishReason := gjson.Get(modelResp, "choices.0.finish_reason").String()
 	if finishReason == "function_call" {
@@ -78,7 +76,7 @@ func Chat(msg string, user string) []byte {
 			Name:    functionName,
 		}
 		messages = append(messages, funMsg)
-		modelResp = ChatCompletionsReq(messages, false)
+		modelResp = ChatCompletionsReq(messages, true)
 	}
 	// 普通消息处理
 	newMsg := gjson.Get(modelResp, "choices.0.message").String()
@@ -95,7 +93,7 @@ func Chat(msg string, user string) []byte {
 }
 
 // ChatCompletionsReq 封装openai chat请求
-func ChatCompletionsReq(messages []model.Message, isNewChat bool) string {
+func ChatCompletionsReq(messages []model.Message, isFunc bool) string {
 	// 获取token
 	apiKey, _ := rds.Rds.Get(context.Background(), "api_key").Result()
 	headers := map[string]string{
@@ -103,9 +101,9 @@ func ChatCompletionsReq(messages []model.Message, isNewChat bool) string {
 		"Authorization": "Bearer " + apiKey}
 	// 拼接参数
 	var requestChat model.Chat
-	if isNewChat {
+	if isFunc {
 		requestChat = model.Chat{
-			Model:       GPT3516K,
+			Model:       GPT35,
 			Messages:    messages,
 			Temperature: 0.5,
 			Functions: []model.Functions{{
@@ -138,12 +136,13 @@ func ChatCompletionsReq(messages []model.Message, isNewChat bool) string {
 		}
 	} else {
 		requestChat = model.Chat{
-			Model:       GPT3516K,
+			Model:       GPT35,
 			Messages:    messages,
 			Temperature: 0.5,
 		}
 	}
 	// 发送请求
+	fmt.Println("open ai req:", requestChat)
 	resp := util.HttpReq("POST", URL, headers, requestChat)
 	strResp := string(resp)
 	// 打印返回

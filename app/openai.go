@@ -12,6 +12,7 @@ import (
 	"io"
 	"net/http"
 	"time"
+	"walnut/constans"
 	"walnut/model"
 	"walnut/rds"
 	"walnut/scheduler"
@@ -136,13 +137,13 @@ func ChatCompletionsReq(messages []model.Message, isFunc bool) string {
 		}
 	} else {
 		requestChat = model.Chat{
-			Model:       GPT35,
+			Model:       GPT3516K,
 			Messages:    messages,
 			Temperature: 0.5,
 		}
 	}
 	// 发送请求
-	fmt.Println("open ai req:", requestChat)
+	//fmt.Println("open ai req:", requestChat)
 	resp := util.HttpReq("POST", URL, headers, requestChat)
 	strResp := string(resp)
 	// 打印返回
@@ -172,4 +173,22 @@ func List(c *gin.Context) {
 	fmt.Println("open ai resp:", string(resp.Body()))
 
 	c.Data(http.StatusOK, "application/json; charset=utf-8", resp.Body())
+}
+
+func AutoSpend(c *gin.Context) {
+	//组织一段长文本
+	//发送给open ai
+	message := model.Message{
+		Role:    "user",
+		Content: constans.GptBestPractices,
+	}
+	//获取总结结果
+	resp := ChatCompletionsReq([]model.Message{message}, false)
+	//发送飞书
+	testAlert, _ := rds.Rds.Get(context.Background(), "test_alert").Result()
+	util.HttpReq("POST",
+		testAlert,
+		map[string]string{constans.CONTENT_TYPE: constans.APPLICATION_JSON},
+		map[string]interface{}{"msg_type": "text", "content": map[string]string{"text": resp}})
+	c.Data(http.StatusOK, constans.APPLICATION_JSON, []byte("success"))
 }

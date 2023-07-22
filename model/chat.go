@@ -4,7 +4,7 @@ type Chat struct {
 	Model       string      `json:"model"`
 	Messages    []Message   `json:"messages"`
 	Temperature float64     `json:"temperature"`
-	Functions   []Functions `json:"functions"`
+	Functions   []Functions `json:"functions,omitempty"`
 }
 
 type Functions struct {

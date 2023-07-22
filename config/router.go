@@ -30,6 +30,7 @@ func Router() *gin.Engine {
 		openai.POST("", app.MakingRequest)
 		openai.GET("/list", app.List)
 		openai.GET("/autoSpend", app.AutoSpend)
+		openai.GET("/autoSpendTask", app.AutoSpendTask)
 	}
 
 	home := r.Group("/home")

@@ -15,10 +15,11 @@ var Scheduler *gocron.Scheduler
 func CronConfig() {
 	Scheduler = gocron.NewScheduler(time.UTC)
 	Scheduler.TagsUnique()
-	Scheduler.StartAsync()
-	fmt.Println("go cron init success")
-	//_, err := scheduler.Every(10).Minutes().Do(app.GoHome("G613", "2023-07-14", "BJP", "TYV"))
+	//_, err := Scheduler.Every(15).Minutes().Do(AutoSpend2())
 	//if err != nil {
 	//	fmt.Println("cron error:", err)
 	//}
+	Scheduler.StartAsync()
+	fmt.Println("go cron init success")
+	//_, err := scheduler.Every(10).Minutes().Do(app.GoHome("G613", "2023-07-14", "BJP", "TYV"))
 }

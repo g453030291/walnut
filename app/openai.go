@@ -176,19 +176,11 @@ func List(c *gin.Context) {
 }
 
 func AutoSpend(c *gin.Context) {
-	//组织一段长文本
-	//发送给open ai
-	message := model.Message{
-		Role:    "user",
-		Content: constans.GptBestPractices,
-	}
-	//获取总结结果
-	resp := ChatCompletionsReq([]model.Message{message}, false)
-	//发送飞书
-	testAlert, _ := rds.Rds.Get(context.Background(), "test_alert").Result()
-	util.HttpReq("POST",
-		testAlert,
-		map[string]string{constans.CONTENT_TYPE: constans.APPLICATION_JSON},
-		map[string]interface{}{"msg_type": "text", "content": map[string]string{"text": resp}})
+	Spend()
+	c.Data(http.StatusOK, constans.APPLICATION_JSON, []byte("success"))
+}
+
+func AutoSpendTask(c *gin.Context) {
+	scheduler.Scheduler.Every(15).Minutes().Do(Spend)
 	c.Data(http.StatusOK, constans.APPLICATION_JSON, []byte("success"))
 }

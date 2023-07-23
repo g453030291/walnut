@@ -5,11 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 	"github.com/tidwall/gjson"
 	"github.com/valyala/fasthttp"
-	"io"
 	"net/http"
 	"time"
 	"walnut/constans"
@@ -19,22 +17,19 @@ import (
 	"walnut/util"
 )
 
-var GPT4 = "gpt-4"
-var GPT35 = "gpt-3.5-turbo"
-var GPT3516K = "gpt-3.5-turbo-16k"
 var URL = "https://api.openai.com/v1/chat/completions"
 
 func MakingRequest(c *gin.Context) {
-	body, err := io.ReadAll(c.Request.Body)
+	var msg model.Msg
+	err := c.BindJSON(&msg)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invilid request json"})
+		fmt.Println("bind json error:", err)
 	}
-	msg := gjson.GetBytes(body, "msg")
-	resp := Chat(msg.String(), uuid.New().String())
+	resp := Chat(msg.Content, msg.Id, msg.Model)
 	c.Data(http.StatusOK, "application/json; charset=utf-8", resp)
 }
 
-func Chat(msg string, user string) []byte {
+func Chat(msg string, user string, modelName model.ModelsEnum) []byte {
 	//拼接消息体 redis中先获取是否有缓存
 	var messages []model.Message
 	messageStr, err := rds.Rds.Get(context.Background(), user).Result()
@@ -57,7 +52,7 @@ func Chat(msg string, user string) []byte {
 		Content: msg,
 	})
 	//请求open ai
-	modelResp := ChatCompletionsReq(messages, true)
+	modelResp := ChatCompletionsReq(messages, true, modelName)
 	//处理返回结果
 	finishReason := gjson.Get(modelResp, "choices.0.finish_reason").String()
 	if finishReason == "function_call" {
@@ -77,7 +72,7 @@ func Chat(msg string, user string) []byte {
 			Name:    functionName,
 		}
 		messages = append(messages, funMsg)
-		modelResp = ChatCompletionsReq(messages, true)
+		modelResp = ChatCompletionsReq(messages, true, modelName)
 	}
 	// 普通消息处理
 	newMsg := gjson.Get(modelResp, "choices.0.message").String()
@@ -94,7 +89,7 @@ func Chat(msg string, user string) []byte {
 }
 
 // ChatCompletionsReq 封装openai chat请求
-func ChatCompletionsReq(messages []model.Message, isFunc bool) string {
+func ChatCompletionsReq(messages []model.Message, isFunc bool, modelName model.ModelsEnum) string {
 	// 获取token
 	apiKey, _ := rds.Rds.Get(context.Background(), "api_key").Result()
 	headers := map[string]string{
@@ -104,7 +99,7 @@ func ChatCompletionsReq(messages []model.Message, isFunc bool) string {
 	var requestChat model.Chat
 	if isFunc {
 		requestChat = model.Chat{
-			Model:       GPT35,
+			Model:       string(modelName),
 			Messages:    messages,
 			Temperature: 0.5,
 			Functions: []model.Functions{{
@@ -137,7 +132,7 @@ func ChatCompletionsReq(messages []model.Message, isFunc bool) string {
 		}
 	} else {
 		requestChat = model.Chat{
-			Model:       GPT3516K,
+			Model:       string(modelName),
 			Messages:    messages,
 			Temperature: 0.5,
 		}

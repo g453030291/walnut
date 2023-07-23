@@ -9,10 +9,11 @@ func Router() *gin.Engine {
 	//创建gin
 	r := gin.New()
 
+	//静态资源
+	r.Static("/web", "./web/dist")
+
 	r.GET("/", func(context *gin.Context) {
-		context.JSON(200, gin.H{
-			"message": "success",
-		})
+		context.File("./web/dist/index.html")
 	})
 
 	health := r.Group("/health")

@@ -62,3 +62,11 @@ nginx加载配置重启:
 连接本地redis:
 
 `redis-cli --raw`
+
+前端(需要先cd到web目录):
+
+编译 `npm install`
+
+本地运行 `npm run dev`
+
+打包 `npm run build`

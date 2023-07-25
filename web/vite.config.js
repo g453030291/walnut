@@ -12,5 +12,17 @@ export default defineConfig({
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
     }
+  },
+  server: {
+    cors: true,
+    proxy: {
+        '/api': {
+            target: 'https://chattest.top/walunt',
+            changeOrigin: true,
+            ws: true,
+            secure: false,
+          rewrite: (path) => path.replace(/^\/api/, '')
+        }
+    }
   }
 })

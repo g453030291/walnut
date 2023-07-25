@@ -20,12 +20,12 @@ func Router() *gin.Engine {
 	{
 		health.GET("/ping", app.Ping)
 	}
-
+	// 飞书
 	fmsg := r.Group("/fmsg")
 	{
 		fmsg.POST("", app.Fmsg)
 	}
-
+	// openai
 	openai := r.Group("/openai")
 	{
 		openai.POST("", app.MakingRequest)
@@ -33,7 +33,7 @@ func Router() *gin.Engine {
 		openai.GET("/autoSpend", app.AutoSpend)
 		openai.GET("/autoSpendTask", app.AutoSpendTask)
 	}
-
+	// train
 	home := r.Group("/home")
 	{
 		home.POST("", app.Home)

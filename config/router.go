@@ -10,11 +10,11 @@ func Router() *gin.Engine {
 	r := gin.New()
 
 	//静态资源
-	r.Static("/web", "./web/dist")
+	//r.Static("/web", "./web/dist")
 
-	r.GET("/", func(context *gin.Context) {
-		context.File("./web/dist/index.html")
-	})
+	//r.GET("/", func(context *gin.Context) {
+	//	context.File("./web/dist/index.html")
+	//})
 
 	health := r.Group("/health")
 	{

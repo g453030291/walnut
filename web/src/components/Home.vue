@@ -87,7 +87,7 @@ const submitForm = async (formEl: FormInstance | undefined) => {
     if (!formEl) return
     await formEl.validate((valid, fields) => {
         if (valid) {
-            axios.post('/api/openai',JSON.stringify(ruleForm)).then((res) => {
+            axios.post('/walunt/openai',JSON.stringify(ruleForm)).then((res) => {
                 resp.value = res.data.choices[0].message.content.replace(/\n/g, '<br>').replace(/\/\n/g, '<br>')
             }).catch((err) => {
                 console.log(err)

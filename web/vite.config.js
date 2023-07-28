@@ -24,5 +24,10 @@ export default defineConfig({
           rewrite: (path) => path.replace(/^\/api/, '')
         }
     }
-  }
+  },
+    // 修改编译后的输出路径dist->web
+  build: {
+    outDir: 'web',
+  },
+    base: '/web/',
 })

@@ -36,7 +36,12 @@ func HttpReq(method string, url string, headers map[string]string, param any) []
 	if err != nil {
 		fmt.Printf("HttpReq client.Do error:%v\n", err)
 	}
-	defer resp.Body.Close()
+
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			fmt.Println("HttpReq resp.Body.Close error:", err)
+		}
+	}()
 
 	//读取响应
 	body, err := io.ReadAll(resp.Body)

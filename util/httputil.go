@@ -2,15 +2,21 @@ package util
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 )
 
 // HttpReq 请求封装
 func HttpReq(method string, url string, headers map[string]string, param any) []byte {
 	client := &http.Client{}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
 	var byteParam io.Reader
 	if param != nil {
 		jsonBytes, err := json.Marshal(param)
@@ -20,7 +26,7 @@ func HttpReq(method string, url string, headers map[string]string, param any) []
 		byteParam = bytes.NewBuffer(jsonBytes)
 	}
 
-	req, err := http.NewRequest(method, url, byteParam)
+	req, err := http.NewRequestWithContext(ctx, method, url, byteParam)
 
 	if err != nil {
 		fmt.Printf("HttpReq http.NewRequest error:%v\n", err)

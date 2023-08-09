@@ -39,6 +39,11 @@ func Router() *gin.Engine {
 		home.POST("", app.Home)
 		home.POST("/remove", app.RemoveTask)
 	}
+	//sms
+	sms := r.Group("/sms")
+	{
+		sms.POST("/send", app.VerificationCode)
+	}
 
 	return r
 }

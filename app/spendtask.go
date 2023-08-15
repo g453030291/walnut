@@ -16,7 +16,10 @@ func Spend() {
 		Content: constans.GptBestPractices,
 	}
 	//获取总结结果
-	resp := ChatCompletionsReq([]model.Message{message}, false, model.GPT35)
+	resp, err := ChatCompletionsReq([]model.Message{message}, false, model.GPT35)
+	if err != nil {
+		return
+	}
 	//发送飞书
 	testAlert, _ := rds.Rds.Get(context.Background(), "test_alert").Result()
 	util.HttpReq("POST",

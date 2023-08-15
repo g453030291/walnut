@@ -27,8 +27,11 @@ func (t *HomeTask) Run() {
 	headers := map[string]string{
 		"Cookie": "_jc_save_fromDate=" + t.FromDate + "; _jc_save_toDate=" + t.FromDate,
 	}
-	result := util.HttpReq("GET", "https://kyfw.12306.cn/otn/leftTicket/query?leftTicketDTO.train_date="+t.FromDate+"&leftTicketDTO.from_station="+t.FromStation+"&leftTicketDTO.to_station="+t.ToStation+"&purpose_codes=ADULT", headers, nil)
-
+	result, err := util.HttpReq("GET", "https://kyfw.12306.cn/otn/leftTicket/query?leftTicketDTO.train_date="+t.FromDate+"&leftTicketDTO.from_station="+t.FromStation+"&leftTicketDTO.to_station="+t.ToStation+"&purpose_codes=ADULT", headers, nil)
+	if err != nil {
+		fmt.Println("12306接口请求失败")
+		return
+	}
 	respData := string(result)
 	httpStatus := gjson.Get(respData, "httpstatus")
 	if httpStatus.Int() != 200 {

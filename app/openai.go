@@ -52,7 +52,11 @@ func Chat(msg string, user string, modelName model.ModelsEnum) []byte {
 		Content: msg,
 	})
 	//请求open ai
-	modelResp := ChatCompletionsReq(messages, true, modelName)
+	modelResp, err := ChatCompletionsReq(messages, true, modelName)
+	if err != nil {
+		fmt.Println("chat completion req error:", err)
+		return []byte("请求失败,请重试!")
+	}
 	//处理返回结果
 	finishReason := gjson.Get(modelResp, "choices.0.finish_reason").String()
 	if finishReason == "function_call" {
@@ -72,7 +76,10 @@ func Chat(msg string, user string, modelName model.ModelsEnum) []byte {
 			Name:    functionName,
 		}
 		messages = append(messages, funMsg)
-		modelResp = ChatCompletionsReq(messages, true, modelName)
+		modelResp, err = ChatCompletionsReq(messages, true, modelName)
+		if err != nil {
+			fmt.Println("chat completion req error:", err)
+		}
 	}
 	// 普通消息处理
 	newMsg := gjson.Get(modelResp, "choices.0.message").String()
@@ -89,7 +96,7 @@ func Chat(msg string, user string, modelName model.ModelsEnum) []byte {
 }
 
 // ChatCompletionsReq 封装openai chat请求
-func ChatCompletionsReq(messages []model.Message, isFunc bool, modelName model.ModelsEnum) string {
+func ChatCompletionsReq(messages []model.Message, isFunc bool, modelName model.ModelsEnum) (string, error) {
 	// 获取token
 	apiKey, _ := rds.Rds.Get(context.Background(), "api_key").Result()
 	headers := map[string]string{
@@ -139,11 +146,15 @@ func ChatCompletionsReq(messages []model.Message, isFunc bool, modelName model.M
 	}
 	// 发送请求
 	//fmt.Println("open ai req:", requestChat)
-	resp := util.HttpReq("POST", URL, headers, requestChat)
+	resp, err := util.HttpReq("POST", URL, headers, requestChat)
+	if err != nil {
+		fmt.Println("open ai http request error:", err)
+		return "", err
+	}
 	strResp := string(resp)
 	// 打印返回
 	fmt.Println("open ai resp:", strResp)
-	return strResp
+	return strResp, nil
 }
 
 // List 列出所有模型

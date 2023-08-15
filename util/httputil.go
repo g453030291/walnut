@@ -11,10 +11,10 @@ import (
 )
 
 // HttpReq 请求封装
-func HttpReq(method string, url string, headers map[string]string, param any) []byte {
+func HttpReq(method string, url string, headers map[string]string, param any) ([]byte, error) {
 	client := &http.Client{}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
 	defer cancel()
 
 	var byteParam io.Reader
@@ -38,9 +38,11 @@ func HttpReq(method string, url string, headers map[string]string, param any) []
 	}
 
 	//发送请求
+	defer handlePanic()
 	resp, err := client.Do(req)
 	if err != nil {
 		fmt.Printf("HttpReq client.Do error:%v\n", err)
+		return nil, err
 	}
 
 	defer func() {
@@ -55,5 +57,11 @@ func HttpReq(method string, url string, headers map[string]string, param any) []
 		fmt.Println("HttpReq io.ReadAll error:", err)
 	}
 
-	return body
+	return body, nil
+}
+
+func handlePanic() {
+	if r := recover(); r != nil {
+		fmt.Println("Recovered from panic:", r)
+	}
 }

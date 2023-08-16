@@ -11,11 +11,12 @@ import (
 
 func SendSms(sms model.Sms) (res *uni.UniResponse) {
 	accessKey, _ := rds.Rds.Get(context.Background(), "unisms_access_key").Result()
+	signature, _ := rds.Rds.Get(context.Background(), "unisms_signature").Result()
 	client := unisms.NewClient(accessKey)
 
 	message := unisms.BuildMessage()
 	message.SetTo(sms.Tel)
-	message.SetSignature("UniSMS")
+	message.SetSignature(signature)
 	message.SetTemplateId(sms.TemplateId)
 	message.SetTemplateData(sms.Param)
 
